@@ -1,0 +1,43 @@
+# ===== 大文件 / 安装包（不进仓库）=====
+*.exe
+*.zip
+*.tgz
+pkg/
+dist/
+/MotionVenus_*.exe
+
+# ===== 临时脚本与实验残留 =====
+.tmp/
+tmp/
+Log/
+log/
+logs/
+*.log
+.manual.txt
+.read_manual.py
+$
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+build/
+
+# ===== 插件依赖（按需 pip 安装）=====
+handlink-plugin/python/site-packages/
+node_modules/
+
+# ===== 编辑器 / 系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# ===== 备份文件 =====
+*.bak
+*.bak-*
+*~

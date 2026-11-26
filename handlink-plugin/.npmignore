@@ -1,0 +1,6 @@
+# 运行产物与依赖目录不进包
+**/__pycache__/
+**/*.pyc
+python/site-packages/
+data/recordings/*
+!data/recordings/.gitkeep

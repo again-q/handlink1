@@ -1,0 +1,1 @@
+[{"motorId":102,"angle":0,"speed":360,"torque":0.5},{"motorId":107,"angle":0,"speed":360,"torque":0.5},{"motorId":103,"angle":0,"speed":360,"torque":0.5},{"motorId":104,"angle":0,"speed":360,"torque":0.5},{"motorId":105,"angle":0,"speed":360,"torque":0.5},{"motorId":106,"angle":0,"speed":360,"torque":0.5}]

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>arm3d 重构 · 界面示意图</title>
+<style>
+:root{--bg:#0a0f1c;--panel:#121a2d;--line:#233150;--txt:#e8eeff;--dim:#8fa0c4;
+      --ok:#4ade80;--warn:#fbbf24;--err:#f87171;--accent:#5b9bff;--blue:#3d72c4;
+      --card:#0f1728;--deep:#080d18}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--txt);font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;
+     display:grid;grid-template-rows:50px 1fr 118px;overflow:hidden}
+
+/* ── 顶栏：全局状态，只有「状态」和「入口」，不放动作 ── */
+.top{display:flex;align-items:center;gap:10px;padding:0 16px;background:#0c1322;
+     border-bottom:1px solid var(--line)}
+.top h1{font-size:14.5px;margin:0 6px 0 0;font-weight:600;letter-spacing:.02em}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;
+      border-radius:99px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.chip b{color:var(--txt);font-weight:600;font-family:ui-monospace,Consolas,monospace}
+.chip.sim{border-color:#7c5cff55;color:#c4b5fd;background:#7c5cff1a}
+.chip.live{border-color:#4ade8055;color:#86efac;background:#4ade801a}
+.chip.ok{border-color:#4ade8055;color:#86efac;background:#4ade801a}
+.chip.warn{border-color:#fbbf2455;color:#fde68a;background:#fbbf241a}
+.chip.err{border-color:#f8717155;color:#fecaca;background:#f871711a}
+.dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.sp{flex:1}
+.btn{cursor:pointer;border:1px solid var(--line);background:#1a2540;color:var(--txt);
+     padding:5px 11px;border-radius:8px;font-size:12.5px;font-family:inherit;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:#fff}
+.btn.on{background:#1d4ed8;border-color:#2563eb}
+.btn.danger{background:#3a1620;border-color:#7f1d1d;color:#fecaca}
+.btn.ghost{background:transparent}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.enable{display:flex;align-items:center;gap:7px;padding:3px 4px 3px 11px;border-radius:99px;
+        border:1px solid var(--line);background:#141d31}
+.enable .pct{width:46px;background:#0e1526;border:1px solid var(--line);color:var(--txt);
+             border-radius:6px;padding:2px 5px;font:12px ui-monospace,Consolas,monospace;text-align:right}
+
+/* ── 左图标栏：工作域选择器（一次只展开一个） ── */
+.body{display:grid;grid-template-columns:66px 1fr 404px;min-height:0}
+.rail{background:#0c1322;border-right:1px solid var(--line);display:flex;flex-direction:column;
+      padding:8px 0;gap:2px;align-items:center}
+.ritem{width:58px;padding:7px 0 6px;border:0;background:transparent;color:var(--dim);cursor:pointer;
+       border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:3px;
+       font-size:10.5px;font-family:inherit;position:relative;line-height:1.2}
+.ritem .ic{font-size:17px;line-height:1;filter:grayscale(.4)}
+.ritem:hover{background:#151f36;color:#cbd6f0}
+.ritem.on{background:#17233d;color:#fff}
+.ritem.on .ic{filter:none}
+.ritem.on::before{content:"";position:absolute;left:-8px;top:9px;bottom:9px;width:2.5px;
+                  border-radius:9px;background:var(--accent)}
+.ritem .tag{position:absolute;top:3px;right:5px;font-size:9px;padding:0 4px;border-radius:99px;
+            background:#1d4ed8;color:#fff;font-family:ui-monospace,Consolas,monospace}
+.ritem .tag.w{background:#a16207}.ritem .tag.g{background:#15803d}
+.rail .sep{width:32px;height:1px;background:var(--line);margin:6px 0}
+
+/* ── 三维舞台 ── */
+.stage{position:relative;background:var(--deep);min-width:0;overflow:hidden}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;border-radius:12px;background:#0b1220cc;border:1px solid var(--line);
+     backdrop-filter:blur(6px);padding:10px 13px}
+.hud.tl{left:14px;top:12px;font:11.5px/1.75 ui-monospace,Consolas,monospace;color:#9fb0d0}
+.hud.tl i{color:#64748b;font-style:normal}
+.hud.tr{right:14px;top:12px;min-width:208px}
+.hud.tr .st{font-size:11px;letter-spacing:.14em;color:var(--dim)}
+.hud.tr .num{font:600 32px/1.1 ui-monospace,Consolas,monospace;margin:1px 0}
+.hud.tr .pair{font-size:11.5px;color:var(--dim)}
+.bar{height:5px;border-radius:99px;background:#1b2438;margin-top:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:62%;background:var(--ok)}
+.viewbar{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;display:flex;gap:5px;
+         background:#0b1220dd;border:1px solid var(--line);border-radius:99px;padding:4px;
+         backdrop-filter:blur(6px)}
+.viewbar .btn{border:0;background:transparent;padding:4px 11px;border-radius:99px}
+.viewbar .btn.on{background:#1d4ed8;color:#fff}
+
+/* ── 右面板 ── */
+.panel{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;
+       min-height:0}
+.phead{display:flex;align-items:center;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.phead h2{margin:0;font-size:13px;font-weight:600;letter-spacing:.04em}
+.phead .sub{font-size:11.5px;color:var(--dim)}
+.pbody{overflow:auto;padding:10px 14px 18px;flex:1}
+.sec{border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:var(--card);
+     overflow:hidden}
+.sec-h{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;user-select:none}
+.sec-h:hover{background:#131d33}
+.sec-h .cv{color:#5f6d8f;font-size:10px;transition:transform .15s;width:9px}
+.sec.on .sec-h .cv{transform:rotate(90deg)}
+.sec-h b{font-size:12.5px;font-weight:600}
+.sec-h .sp{flex:1}
+.sec-h .badge{font-size:11px;color:var(--dim);font-family:ui-monospace,Consolas,monospace}
+.sec-b{display:none;padding:2px 11px 11px;border-top:1px solid #1b2540}
+.sec.on .sec-b{display:block}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:7px 0}
+.row:first-child{margin-top:9px}
+.muted{color:var(--dim);font-size:11.5px}
+
+/* ── 参数表 ── */
+table.p{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+table.p th{text-align:left;color:#64748b;font-weight:500;font-size:10.5px;letter-spacing:.08em;
+           padding:4px 0 5px;border-bottom:1px solid #1b2540}
+table.p td{padding:4.5px 0;border-bottom:1px solid #151f31;vertical-align:top}
+table.p tr:last-child td{border-bottom:0}
+table.p td:first-child{color:var(--dim);width:44%}
+table.p td.v{font-family:ui-monospace,Consolas,monospace;color:#cbd6f0}
+table.p td.v .ro{color:#556b8f}
+table.p td.s{width:34px;text-align:right;font-size:10px;color:#4d5f7d}
+.tag2{font-size:9.5px;padding:0 4px;border-radius:4px;border:1px solid #2a3a5c;color:#7c8ba8}
+.tag2.e{border-color:#3f6212;color:#a3e635;background:#3f621226}
+.tag2.r{border-color:#334155;color:#64748b}
+
+/* 画板 */
+.padwrap{position:relative;margin-top:9px}
+.pad{width:100%;height:132px;border-radius:10px;background:#0b1220;border:1px solid #2a3a5c;
+     display:block}
+.padx{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);
+      background:#0b1220cc;color:#8fa0c4;font-size:12px;line-height:1;cursor:pointer}
+
+/* 关节滑块 */
+.joint{display:grid;grid-template-columns:26px 1fr 58px;gap:8px;align-items:center;margin:4px 0;
+       font-size:12px}
+.joint b{color:var(--dim);font-weight:600}
+.joint output{text-align:right;font:11.5px ui-monospace,Consolas,monospace;color:#cbd6f0}
+.sl{height:4px;border-radius:99px;background:#1b2438;position:relative}
+.sl i{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--accent);
+      box-shadow:0 0 6px #5b9bff88}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0}
+.kv span{color:var(--dim)}
+.kv b{font-weight:600;font-family:ui-monospace,Consolas,monospace}
+
+/* ── 底部动作台：所有可执行动作的唯一入口 ── */
+.dock{background:#0c1322;border-top:1px solid var(--line);display:grid;
+      grid-template-columns:280px 1fr 330px;align-items:center;gap:14px;padding:0 16px}
+.dock .target{display:flex;flex-direction:column;gap:4px}
+.dock .target .lab{font-size:10.5px;letter-spacing:.12em;color:#5f6d8f}
+.dock .target .val{font-size:13px;display:flex;align-items:center;gap:7px}
+.dock .target .val b{font-family:ui-monospace,Consolas,monospace;font-weight:600}
+.steps{display:flex;align-items:center;gap:0}
+.step{display:flex;align-items:center;gap:7px;padding:0 4px}
+.step .n{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;
+         border:1px solid var(--line);color:var(--dim);background:#111a2c;font-family:ui-monospace,monospace}
+.step.done .n{background:#15803d;border-color:#22c55e;color:#fff}
+.step.now .n{background:#1d4ed8;border-color:#3b82f6;color:#fff;box-shadow:0 0 0 3px #1d4ed833}
+.step .lbl{font-size:12px;color:var(--dim)}
+.step.now .lbl{color:#fff;font-weight:600}
+.link{width:26px;height:1px;background:var(--line);margin:0 2px}
+.dock .res{font-size:12px;color:var(--dim);text-align:right;line-height:1.6}
+.dock .res b{color:var(--ok);font-family:ui-monospace,Consolas,monospace}
+.prog{height:3px;border-radius:99px;background:#1b2438;margin-top:7px;overflow:hidden}
+.prog i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#15803d,#4ade80)}
+.legend{position:absolute;left:14px;bottom:12px;font-size:11px;color:#4d5f7d}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ 顶栏 ═══════════ -->
+<div class="top">
+  <h1>三维机械臂 · 安全环境</h1>
+  <span class="chip sim"><span class="dot"></span>仿真</span>
+  <span class="chip"><span class="dot" style="color:#64748b"></span>未使能</span>
+  <span class="enable">
+    <span style="font-size:11.5px;color:var(--dim)">速度</span>
+    <span class="pct">20</span>
+    <span style="font-size:11.5px;color:var(--dim)">%</span>
+    <button class="btn sm" style="margin-left:2px">使能</button>
+  </span>
+  <span class="sp"></span>
+  <span class="chip ok">最小间距 <b>412</b> mm</span>
+  <span class="chip">手腕 <b>+18°</b></span>
+  <span class="chip">手 <b>握拳</b></span>
+  <span class="sp"></span>
+  <button class="btn ghost sm">灵巧手 →</button>
+  <button class="btn ghost sm">摄像头 →</button>
+</div>
+
+<div class="body">
+
+  <!-- ═══════════ 左图标栏 ═══════════ -->
+  <nav class="rail">
+    <button class="ritem on" id="r1"><span class="ic">✍</span>轨迹<span class="tag">38</span></button>
+    <button class="ritem" id="r2"><span class="ic">⚑</span>姿态</button>
+    <button class="ritem" id="r3"><span class="ic">▤</span>动作库</button>
+    <div class="sep"></div>
+    <button class="ritem" id="r4"><span class="ic">⛨</span>安全<span class="tag g">OK</span></button>
+    <button class="ritem" id="r5"><span class="ic">◉</span>视觉<span class="tag w">!</span></button>
+    <div class="sep"></div>
+    <button class="ritem" id="r6"><span class="ic">⚙</span>参数</button>
+  </nav>
+
+  <!-- ═══════════ 三维舞台 ═══════════ -->
+  <div class="stage">
+    <svg viewBox="0 0 900 560" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#0a1222"/><stop offset="1" stop-color="#070b14"/>
+        </linearGradient>
+        <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#141d31"/><stop offset="1" stop-color="#0a0f1c"/>
+        </linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="3.4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect width="900" height="560" fill="url(#sky)"/>
+      <!-- 地面网格 -->
+      <g stroke="#1c3557" stroke-width="1" opacity=".55">
+        <path d="M60 470 H840"/>
+        <path d="M120 500 H780"/><path d="M180 530 H720"/>
+        <path d="M250 440 L60 470"/><path d="M350 440 L180 470"/>
+        <path d="M450 440 L300 470"/><path d="M550 440 L420 470"/>
+        <path d="M650 440 L540 470"/><path d="M750 440 L660 470"/>
+        <path d="M250 440 L180 530"/><path d="M450 440 L300 530"/>
+        <path d="M650 440 L660 530"/><path d="M750 440 L780 530"/>
+      </g>
+      <ellipse cx="450" cy="486" rx="330" ry="58" fill="url(#floor)" opacity=".8"/>
+      <!-- 桌面 -->
+      <g>
+        <path d="M300 430 L610 430 L650 465 L262 465 Z" fill="#cfd6e2" opacity=".13"/>
+        <path d="M300 430 L610 430 L650 465 L262 465 Z" fill="none" stroke="#8fa0c4" stroke-width="1" opacity=".45"/>
+        <path d="M262 465 L650 465 L650 471 L262 471 Z" fill="#59637a" opacity=".6"/>
+        <!-- 桌腿 -->
+        <g stroke="#59637a" stroke-width="4" opacity=".75">
+          <path d="M290 471 L288 524"/><path d="M626 471 L628 524"/>
+          <path d="M304 471 L302 516"/><path d="M612 471 L614 516"/>
+        </g>
+      </g>
+      <!-- 纸面区域 -->
+      <g>
+        <path d="M362 442 L556 442 L572 458 L348 458 Z" fill="#fbbf24" opacity=".10"/>
+        <path d="M362 442 L556 442 L572 458 L348 458 Z" fill="none" stroke="#fbbf24" stroke-width="1.1"
+              stroke-dasharray="5 3" opacity=".8"/>
+        <!-- 已规划的指尖轨迹（一个圆） -->
+        <ellipse cx="460" cy="450" rx="52" ry="8.5" fill="none" stroke="#4ade80" stroke-width="1.6"
+                 opacity=".95" filter="url(#glow)"/>
+        <ellipse cx="460" cy="450" rx="52" ry="8.5" fill="none" stroke="#86efac" stroke-width=".7" opacity=".6"/>
+      </g>
+      <!-- 机械臂线框 -->
+      <g fill="none" stroke="#3d72c4" stroke-width="9" stroke-linecap="round" opacity=".95">
+        <path d="M212 430 L212 400"/>
+        <path d="M212 400 L286 316"/>
+        <path d="M286 316 L372 366"/>
+        <path d="M372 366 L452 404"/>
+      </g>
+      <g fill="none" stroke="#93b4e8" stroke-width="2" stroke-linecap="round" opacity=".7">
+        <path d="M212 430 L212 400"/><path d="M212 400 L286 316"/>
+        <path d="M286 316 L372 366"/><path d="M372 366 L452 404"/>
+      </g>
+      <g fill="#3d72c4">
+        <rect x="196" y="424" width="34" height="12" rx="3"/>
+        <circle cx="212" cy="400" r="9"/><circle cx="286" cy="316" r="8"/>
+        <circle cx="372" cy="366" r="6.5"/><circle cx="452" cy="404" r="5.5"/>
+      </g>
+      <g stroke="#b7bec9" stroke-width="2" opacity=".9">
+        <path d="M452 404 L470 414"/><path d="M452 404 L464 418"/>
+      </g>
+      <!-- 人（禁入柱） -->
+      <g opacity=".5">
+        <rect x="762" y="352" width="26" height="76" rx="12" fill="#4b5f83"/>
+        <circle cx="775" cy="340" r="12" fill="#c9a68b"/>
+        <ellipse cx="775" cy="470" rx="46" ry="10" fill="#f87171" opacity=".12"/>
+        <ellipse cx="775" cy="470" rx="46" ry="10" fill="none" stroke="#f87171" stroke-width="1"
+                 stroke-dasharray="4 4" opacity=".45"/>
+      </g>
+      <!-- 相机立柱 -->
+      <g stroke="#59637a" stroke-width="3" opacity=".55">
+        <path d="M700 438 L700 350"/><rect x="692" y="342" width="18" height="10" rx="2" fill="#59637a"/>
+      </g>
+    </svg>
+
+    <div class="hud tl">
+      <i>J  </i> 0.0 -25.0 -40.0  0.0  65.0  0.0<br>
+      <i>XYZ</i>  611  -172   720<br>
+      <i>R  </i>  180.0  -0.0  -180.0
+    </div>
+
+    <div class="hud tr">
+      <div class="st">SAFE</div>
+      <div class="num" style="color:#86efac">412<span style="font-size:15px;color:#8fa0c4"> mm</span></div>
+      <div class="pair">J6 ↔ 料盒</div>
+      <div class="bar"><i></i></div>
+      <div class="pair" style="margin-top:7px">SSM 要求 96 mm · TCP 62 mm/s</div>
+    </div>
+
+    <div class="viewbar">
+      <button class="btn on">斜视</button><button class="btn">俯视</button>
+      <button class="btn">前视</button><button class="btn">侧视</button>
+      <button class="btn">看纸面</button>
+    </div>
+    <div class="legend">左键旋转 · 滚轮缩放 · 右键平移</div>
+  </div>
+
+  <!-- ═══════════ 右侧面板：随左栏切换，只展开相关内容 ═══════════ -->
+  <aside class="panel">
+    <div class="phead">
+      <h2 id="ptitle">✍ 二维手绘轨迹</h2>
+      <span class="sub" id="psub">画 → 规划 → 执行</span>
+      <span class="sp" style="flex:1"></span>
+      <button class="btn sm ghost" title="只留最常用的，其余收起">收起全部</button>
+    </div>
+
+    <div class="pbody" id="pbody">
+
+      <!-- ───── 轨迹面板 ───── -->
+      <div id="pg1">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>画板</b><span class="sp"></span>
+            <span class="badge">38 点 · 15.0 mm</span></div>
+          <div class="sec-b">
+            <div class="padwrap">
+              <svg class="pad" viewBox="0 0 380 132" preserveAspectRatio="none">
+                <rect width="380" height="132" fill="#0b1220"/>
+                <g stroke="#16233b" stroke-width="1">
+                  <path d="M0 66 H380"/><path d="M190 0 V132"/>
+                </g>
+                <ellipse cx="190" cy="66" rx="74" ry="42" fill="none" stroke="#7c5cff"
+                         stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
+                <circle cx="190" cy="24" r="3.2" fill="#c4b5fd"/>
+              </svg>
+              <button class="padx" title="清空">×</button>
+            </div>
+            <div class="muted" style="margin-top:6px">横向 u ← 左到右，纵向 v ← 上到下，映射到实测可解纸面矩形</div>
+          </div>
+        </div>
+
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>轨迹参数</b><span class="sp"></span>
+            <span class="badge">TraceConfig</span></div>
+          <div class="sec-b">
+            <table class="p">
+              <tr><th>参数</th><th>值</th><th></th></tr>
+              <tr><td>步长 max_step_mm</td><td class="v">15.0 mm</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>圆角 blend_r_mm</td><td class="v">5.0 mm</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>拐角吸附 corner_deg</td><td class="v">50.0°</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>书写速度</td><td class="v">40 mm/s</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>加速度 accel_pct</td><td class="v">0（不设）</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>纸面高度 paper_z</td><td class="v">250.0 mm</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>可达区域 x</td><td class="v">-320 .. 420</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>可达区域 y</td><td class="v">-480 .. -180</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+            </table>
+            <div class="muted" style="margin-top:7px">出处 <span style="font-family:ui-monospace">handlink/trace2d.py · TraceConfig</span></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>方向与闭合</b><span class="sp"></span>
+            <span class="badge">正</span></div>
+          <div class="sec-b">
+            <div class="row"><span class="muted" style="width:56px">方向</span>
+              <button class="btn sm on">正</button><button class="btn sm">左右</button>
+              <button class="btn sm">上下</button><button class="btn sm">全镜像</button>
+            </div>
+            <div class="row"><label class="muted"><input type="checkbox"> 首尾相连</label>
+              <label class="muted"><input type="checkbox" checked> 显示纸面框</label></div>
+            <div class="row"><span class="muted" style="width:56px">手型</span>
+              <select class="btn sm" style="padding:4px 8px"><option>握拳</option><option>张开</option>
+              <option>捏</option><option>食指指</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>播放与安全</b><span class="sp"></span>
+            <span class="badge">4×</span></div>
+          <div class="sec-b">
+            <div class="row"><span class="muted" style="width:56px">倍速</span>
+              <button class="btn sm">1×</button><button class="btn sm on">4×</button>
+              <button class="btn sm">8×</button><button class="btn sm">16×</button>
+              <button class="btn sm">到位</button></div>
+            <div class="row"><label class="muted"><input type="checkbox"> 执行前回固定高位（慢）</label></div>
+            <div class="kv"><span>预计时长</span><b>48.3 s</b></div>
+            <div class="kv"><span>播放耗时</span><b>12.1 s</b></div>
+            <div class="kv"><span>可达区</span><b>x -320..420 · y -480..-180</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── 其他面板（示意图里只给出结构） ───── -->
+      <div id="pg2" style="display:none">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>关节角（度）</b><span class="sp"></span>
+            <span class="badge">滑块 = 目标姿态</span></div>
+          <div class="sec-b">
+            <div class="joint"><b>J1</b><div class="sl"><i style="left:50%"></i></div><output>0.0°</output></div>
+            <div class="joint"><b>J2</b><div class="sl"><i style="left:38%"></i></div><output>-25.0°</output></div>
+            <div class="joint"><b>J3</b><div class="sl"><i style="left:34%"></i></div><output>-40.0°</output></div>
+            <div class="joint"><b>J4</b><div class="sl"><i style="left:50%"></i></div><output>0.0°</output></div>
+            <div class="joint"><b>J5</b><div class="sl"><i style="left:61%"></i></div><output>65.0°</output></div>
+            <div class="joint"><b>J6</b><div class="sl"><i style="left:50%"></i></div><output>0.0°</output></div>
+            <div class="row" style="margin-top:9px">
+              <span class="muted">预设</span>
+              <button class="btn sm">零位</button><button class="btn sm on">预备</button>
+              <button class="btn sm">前伸</button><button class="btn sm">侧伸</button>
+              <button class="btn sm">折叠</button>
+            </div>
+            <div class="row"><button class="btn sm">拖动示教</button>
+              <span class="muted">真机在线且已使能才可用，退出后姿态保持</span></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>保存的姿态</b><span class="sp"></span>
+            <span class="badge">3 个</span></div>
+          <div class="sec-b">
+            <div class="row"><input class="btn sm" style="flex:1;text-align:left;color:#64748b"
+                     value="名字（留空自动编号）"><button class="btn sm">保存当前</button></div>
+            <div class="row">
+              <span class="chip" style="padding:0;overflow:hidden">
+                <button class="btn sm" style="border:0;border-radius:0">桌面抓取</button>
+                <button class="btn sm" style="border:0;border-radius:0;color:#fca5a5">×</button></span>
+              <span class="chip" style="padding:0;overflow:hidden">
+                <button class="btn sm" style="border:0;border-radius:0">纸面上方</button>
+                <button class="btn sm" style="border:0;border-radius:0;color:#fca5a5">×</button></span>
+              <span class="chip" style="padding:0;overflow:hidden">
+                <button class="btn sm" style="border:0;border-radius:0">归位</button>
+                <button class="btn sm" style="border:0;border-radius:0;color:#fca5a5">×</button></span>
+            </div>
+            <div class="muted" style="margin-top:7px">存六个关节角 + 一份末端位姿；点名字回填滑块，再走下方「校验 → 执行」</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>末端位姿</b><span class="sp"></span>
+            <span class="badge">模型正解</span></div>
+          <div class="sec-b">
+            <table class="p">
+              <tr><td>X</td><td class="v">611.2 mm</td><td></td></tr>
+              <tr><td>Y</td><td class="v">-172.4 mm</td><td></td></tr>
+              <tr><td>Z</td><td class="v">720.1 mm</td><td></td></tr>
+              <tr><td>RX / RY / RZ</td><td class="v">180.0 / -0.0 / -180.0</td><td></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="pg3" style="display:none">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>组动作库</b><span class="sp"></span>
+            <span class="badge">arm_actions.py</span></div>
+          <div class="sec-b">
+            <div class="row">
+              <button class="btn sm">挥手</button><button class="btn sm">打招呼</button>
+              <button class="btn sm">点头</button><button class="btn sm">伸个腰</button>
+              <button class="btn sm">左右看</button><button class="btn sm">握拳松开</button>
+            </div>
+            <div class="muted" style="margin-top:7px">
+              一串关节路点，全部相对「现在这个姿态」算增量，臂站在哪都能做。
+              点一下 → 计划出现在下方动作台 → 预览 / 执行。
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pg4" style="display:none">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>安全状态</b><span class="sp"></span>
+            <span class="badge">SAFE</span></div>
+          <div class="sec-b">
+            <div class="kv"><span>最小间距</span><b style="color:#86efac">412 mm</b></div>
+            <div class="kv"><span>最近的一对</span><b>J6 ↔ 料盒</b></div>
+            <div class="kv"><span>到操作员</span><b>688 mm</b></div>
+            <div class="kv"><span>SSM 要求</span><b>96 mm</b></div>
+            <div class="kv"><span>当前 TCP 速度</span><b>62 mm/s</b></div>
+            <div class="muted" style="margin-top:6px">红色 ≤ 40 mm 拦截，黄色 &lt; 100 mm 提醒；来自胶囊代理与工位几何</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>手腕走线</b><span class="sp"></span>
+            <span class="badge">±360°</span></div>
+          <div class="sec-b">
+            <div class="kv"><span>J4 累计扭转</span><b>+18°</b></div>
+            <div class="kv"><span>J6 累计扭转</span><b>-142°</b></div>
+            <div class="row"><button class="btn sm">标记为「没缠」</button></div>
+            <div class="muted" style="margin-top:6px">目标换成等效角（可反方向转），超 ±360° 只接受能回缠的方向</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-h"><span class="cv">▶</span><b>场景显示</b><span class="sp"></span></div>
+          <div class="sec-b">
+            <div class="row"><label class="muted"><input type="checkbox"> 碰撞代理（胶囊）</label>
+              <label class="muted"><input type="checkbox" checked> 禁入区</label>
+              <label class="muted"><input type="checkbox"> 上次校验轨迹</label></div>
+            <div class="kv"><span>障碍</span><b>料盒 · 相机立柱 · 防护栏</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pg5" style="display:none">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>桌面平面标定</b><span class="sp"></span>
+            <span class="badge" style="color:#fbbf24">未标定</span></div>
+          <div class="sec-b">
+            <div class="kv"><span>重投影误差</span><b>—</b></div>
+            <div class="kv"><span>桌上物体</span><b>0</b></div>
+            <div class="kv"><span>视觉延迟</span><b>—</b></div>
+            <div class="row"><label class="muted"><input type="checkbox" checked> 在桌面叠加相机画面</label></div>
+            <div class="row"><button class="btn sm">去 /vision 点桌面四角 →</button></div>
+            <div class="muted" style="margin-top:6px">相机看到的物体进的是碰撞模型，不是只画个框</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="pg6" style="display:none">
+        <div class="sec on">
+          <div class="sec-h"><span class="cv">▶</span><b>全部参数</b><span class="sp"></span>
+            <span class="badge">只读视图</span></div>
+          <div class="sec-b">
+            <table class="p">
+              <tr><th>参数</th><th>值</th><th></th></tr>
+              <tr><td colspan="3" style="color:#64748b;font-size:10.5px;letter-spacing:.08em;padding-top:8px">纸面几何</td></tr>
+              <tr><td>paper_z</td><td class="v">250.0</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>tip_offset</td><td class="v">16.0, 0.0, -238.0</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>region_x</td><td class="v">-320 .. 420</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>region_y</td><td class="v">-480 .. -180</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td colspan="3" style="color:#64748b;font-size:10.5px;letter-spacing:.08em;padding-top:8px">轨迹质量</td></tr>
+              <tr><td>max_step_mm</td><td class="v">15.0</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>blend_r_mm</td><td class="v">5.0</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>corner_deg</td><td class="v">50.0</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td colspan="3" style="color:#64748b;font-size:10.5px;letter-spacing:.08em;padding-top:8px">安全阈值</td></tr>
+              <tr><td>safe_mm（红线）</td><td class="v">40</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>warn_mm</td><td class="v">100</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td>wrist_limit_deg</td><td class="v">300.0</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+              <tr><td colspan="3" style="color:#64748b;font-size:10.5px;letter-spacing:.08em;padding-top:8px">下发</td></tr>
+              <tr><td>speed_pct 默认</td><td class="v">20</td><td class="s"><span class="tag2 e">可改</span></td></tr>
+              <tr><td>batch_size（队列窗口）</td><td class="v">40</td><td class="s"><span class="tag2 r">只读</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<!-- ═══════════ 底部动作台：唯一执行入口 ═══════════ -->
+<div class="dock">
+  <div class="target">
+    <span class="lab">当前目标</span>
+    <span class="val">✍ 二维轨迹 <b>38 点 · 15.0 mm · 1932 mm</b></span>
+    <span class="muted" style="font-size:11px">来自左侧「轨迹」面板</span>
+  </div>
+
+  <div class="steps">
+    <div class="step done"><span class="n">1</span><span class="lbl">绘制</span></div>
+    <div class="link"></div>
+    <div class="step done"><span class="n">2</span><span class="lbl">规划预览</span></div>
+    <div class="link"></div>
+    <div class="step now"><span class="n">3</span><span class="lbl">播放 / 下发</span></div>
+    <div class="link"></div>
+    <div class="step"><span class="n">4</span><span class="lbl">完成</span></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn">重新规划</button>
+      <button class="btn">▶ 播放 4×</button>
+      <button class="btn">⌂ 安全抬升</button>
+      <button class="btn danger" disabled>⬆ 下发真机</button>
+    </div>
+    <div class="res">已规划 <b>38/38</b> · 失败 <b style="color:#86efac">0</b> · 关节跳变 2.84° · 首尾闭合 0.000 mm</div>
+    <div class="prog"><i></i></div>
+  </div>
+</div>
+
+<script>
+const PANELS = {
+  r1: ["✍ 二维手绘轨迹", "画 → 规划 → 执行", "pg1"],
+  r2: ["⚑ 姿态与关节", "手动摆位 / 保存 / 回填", "pg2"],
+  r3: ["▤ 组动作库", "一串关节路点", "pg3"],
+  r4: ["⛨ 安全状态", "间距 / SSM / 手腕 / 显示", "pg4"],
+  r5: ["◉ 视觉与标定", "相机 → 碰撞模型", "pg5"],
+  r6: ["⚙ 参数表", "全量参数一页看完", "pg6"],
+};
+for (const id of Object.keys(PANELS)) {
+  document.getElementById(id).onclick = () => {
+    document.querySelectorAll(".ritem").forEach(b => b.classList.remove("on"));
+    document.getElementById(id).classList.add("on");
+    const [t, s, pg] = PANELS[id];
+    document.getElementById("ptitle").textContent = t;
+    document.getElementById("psub").textContent = s;
+    for (let i = 1; i <= 6; i++) document.getElementById("pg" + i).style.display = "none";
+    document.getElementById(pg).style.display = "block";
+  };
+}
+document.querySelectorAll(".sec-h").forEach(h => {
+  h.onclick = () => h.parentElement.classList.toggle("on");
+});
+</script>
+</body>
+</html>

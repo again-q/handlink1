@@ -1,0 +1,12 @@
+# 机械手控制终端 · 可选依赖
+#
+# 核心服务（逐指控制 / 点位 / 动作 / 录制 / 仿真）只用 Python 标准库，**不装这些也能用**。
+# 下面这些是打开摄像头、视觉识别、麦克风、真机串口时才需要的：
+#
+#   python -m pip install -r requirements.txt
+#
+# 也可以在终端页点「安装依赖」，宿主会装进本包的 python/site-packages，不污染系统环境。
+numpy>=1.24
+opencv-python>=4.8
+pillow>=10.0
+pyserial>=3.5

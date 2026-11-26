@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Robot Hand Terminal",
+    "description": "Operate a Zhongke Lingxi LG-603 dexterous hand inside DSH: per-finger control, preset points, track playback, recording analysis and natural-language skills. The host starts the bundled handlink service automatically and falls back to simulation when no hardware is attached."
+  }
+}

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LG-603 上手全流程 · 智衍AI社</title>
+<style>
+  :root{--bg:#0b1020;--panel:#141c33;--line:#24304f;--txt:#e6ecff;--dim:#8d9bbd;
+        --ok:#4ade80;--warn:#fbbf24;--err:#f87171;--accent:#60a5fa;--violet:#a78bfa}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:15px/1.65 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  a{color:var(--accent)}
+  header{position:sticky;top:0;z-index:10;background:rgba(11,16,32,.92);
+         backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 20px}
+  .hrow{display:flex;align-items:center;gap:14px;max-width:1080px;margin:0 auto}
+  h1{font-size:17px;margin:0;font-weight:600;white-space:nowrap}
+  .sub{font-size:12px;color:var(--dim);white-space:nowrap}
+  .grow{flex:1}
+  .bar{height:8px;background:#1d2743;border-radius:99px;overflow:hidden;flex:1;min-width:120px}
+  .bar>i{display:block;height:100%;width:0;
+         background:linear-gradient(90deg,var(--accent),var(--violet));transition:width .25s}
+  .pct{font-variant-numeric:tabular-nums;font-size:13px;color:var(--dim);min-width:46px;text-align:right}
+  button{cursor:pointer;border:1px solid var(--line);background:#1b2440;color:var(--txt);
+         padding:6px 11px;border-radius:8px;font-size:13px}
+  button:hover{border-color:var(--accent);color:#fff}
+  button.ghost{background:transparent}
+  main{max-width:1080px;margin:0 auto;padding:20px 20px 80px}
+  .lead{color:var(--dim);font-size:14px;margin:6px 0 20px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .card b{display:block;font-size:13px;color:var(--txt);margin-bottom:4px}
+  .card span{font-size:12.5px;color:var(--dim)}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+          margin-bottom:12px;overflow:hidden}
+  details[open]{border-color:#33436b}
+  summary{list-style:none;cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:12px}
+  summary::-webkit-details-marker{display:none}
+  .num{width:26px;height:26px;border-radius:8px;background:#1e2a49;color:var(--accent);
+       display:grid;place-items:center;font-size:13px;font-weight:600;flex:none}
+  .t{font-weight:600;font-size:15px}
+  .tag{font-size:11.5px;color:var(--dim);border:1px solid var(--line);border-radius:99px;
+       padding:1px 8px;white-space:nowrap}
+  .mini{width:70px;height:6px;background:#1d2743;border-radius:99px;overflow:hidden;flex:none}
+  .mini>i{display:block;height:100%;width:0;background:var(--ok)}
+  .body{padding:0 18px 16px 56px;border-top:1px solid #1c2540}
+  ul.items{list-style:none;padding:0;margin:12px 0 0}
+  ul.items li{display:flex;gap:10px;padding:7px 0;border-bottom:1px dashed #1e2740}
+  ul.items li:last-child{border-bottom:0}
+  ul.items input[type=checkbox]{margin-top:5px;width:17px;height:17px;accent-color:var(--ok);flex:none}
+  label{flex:1;cursor:pointer}
+  label.done{color:var(--dim);text-decoration:line-through;text-decoration-color:#3b4a70}
+  .why{display:block;color:var(--dim);font-size:12.5px;margin-top:2px}
+  .warn{display:block;color:var(--warn);font-size:12.5px;margin-top:2px}
+  pre{position:relative;background:#0e1526;border:1px solid #1d2743;border-radius:10px;
+      padding:10px 12px;overflow:auto;font:12.5px/1.6 ui-monospace,Consolas,monospace;color:#b9c8ea;margin:10px 0}
+  pre .cp{position:absolute;right:8px;top:8px;font-size:11.5px;padding:3px 8px}
+  code{background:#141d33;padding:1px 5px;border-radius:5px;font-size:12.5px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #1d2743;vertical-align:top}
+  th{color:var(--dim);font-weight:500}
+  .danger{border-color:#5b2732;background:#1d1420}
+  .danger .num{background:#3a1b24;color:var(--err)}
+  .done-all{opacity:.62}
+  footer{max-width:1080px;margin:0 auto;padding:0 20px 40px;color:var(--dim);font-size:12.5px}
+  @media print{header{position:static} details{break-inside:avoid} .cp{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <h1>拿到机械手之后干什么</h1>
+    <span class="sub">LG-603 灵巧手 · 全流程</span>
+    <div class="bar"><i id="globalBar"></i></div>
+    <span class="pct" id="globalPct">0%</span>
+    <button class="ghost" onclick="nextStep()">下一个未完成 ↓</button>
+    <button class="ghost" onclick="resetAll()">清空进度</button>
+  </div>
+</header>
+
+<main>
+  <div class="lead">
+    从开箱到展台，八步。前六步只用手就能做完，第七步才上机械臂。
+    <b>勾选会存在本机浏览器里</b>，换电脑不同步。
+  </div>
+
+  <div class="cards">
+    <div class="card"><b>⏱ 预计节奏</b><span>手单独跑通：3–5 天（每天 1–2 小时）<br>上臂闭环：再加 1–2 周</span></div>
+    <div class="card"><b>👥 建议配置</b><span>两个人：一个点鼠标，一个盯手<br>出事只按急停，不去拽线</span></div>
+    <div class="card"><b>🧰 你要有的</b><span>手 + 电源 + CAN 盒/串口线<br>数据手套 + MotionVenus 安装包</span></div>
+    <div class="card"><b>🚦 今天先做</b><span>解压软件包、装 MotionVenus、跑一遍 <code>selftest</code></span></div>
+  </div>
+
+  <!-- 0 -->
+  <details data-phase="0" open>
+    <summary><span class="num">0</span><span class="t">开箱前准备</span>
+      <span class="tag">不用等手到</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p0-1"><label for="p0-1">把 LG-603 完整解压到固定目录
+          <span class="why">不要在压缩包预览窗口里直接运行；<code>points</code> / <code>tracks</code> / <code>resources</code> 别乱挪</span></label></li>
+        <li><input type="checkbox" id="p0-2"><label for="p0-2">装 MotionVenus（手套端软件）
+          <span class="why">安装包在你下载的 <code>福州八中.zip</code> 里，128 MB</span></label></li>
+        <li><input type="checkbox" id="p0-3"><label for="p0-3">确认 Python 3.10+，跑通连接器自测</label></li>
+        <li><input type="checkbox" id="p0-4"><label for="p0-4">把电机限位表打印出来贴工位</label></li>
+      </ul>
+<pre>python -m handlink selftest
+python -m handlink limits<button class="cp" onclick="copyPre(this)">复制</button></pre>
+    </div>
+  </details>
+
+  <!-- 1 -->
+  <details data-phase="1">
+    <summary><span class="num">1</span><span class="t">第一次通电与连接</span>
+      <span class="tag">约 30 分钟</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p1-1"><label for="p1-1">手空载放平，核对电源电压与极性</label></li>
+        <li><input type="checkbox" id="p1-2"><label for="p1-2">接线：CAN 或串口
+          <span class="why">CAN 默认设备类型 4 / 索引 0 / 通道 0-1 / 1000 Kbps；串口默认 115200</span></label></li>
+        <li><input type="checkbox" id="p1-3"><label for="p1-3">启动 <code>LG-603.exe</code> → 灵巧手页 → 打开连接</label></li>
+        <li><input type="checkbox" id="p1-4"><label for="p1-4">选左手/右手，和实物一致</label></li>
+        <li><input type="checkbox" id="p1-5"><label for="p1-5">用我们的扫描确认设备在
+          <span class="why">看到 <code>com_ports</code> 有值，或 <code>can_devices.opened=true</code></span></label></li>
+        <li><input type="checkbox" id="p1-6"><label for="p1-6">先不发任何指令，看电机状态页有没有异常</label></li>
+      </ul>
+<pre>python -m handlink scan<button class="cp" onclick="copyPre(this)">复制</button></pre>
+      <div class="warn">⚠️ 别用「电机调试」里的校准电流/零位偏置——那会改设备基准，属于现场规程。</div>
+    </div>
+  </details>
+
+  <!-- 2 -->
+  <details data-phase="2">
+    <summary><span class="num">2</span><span class="t">单指验证（最重要的一步）</span>
+      <span class="tag">约 20 分钟</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p2-1"><label for="p2-1">速度 30、电流 0.2 A，从拇指1开始：10° → 30° → 回 0°</label></li>
+        <li><input type="checkbox" id="p2-2"><label for="p2-2">记录方向：正角度是屈曲吗？左右手是不是镜像</label></li>
+        <li><input type="checkbox" id="p2-3"><label for="p2-3">六根手指各过一遍，异常记下来</label></li>
+        <li><input type="checkbox" id="p2-4"><label for="p2-4">故意发一个越界角度，确认被拦住（应返回 422）</label></li>
+      </ul>
+<pre>python -m handlink pose --motor 102=10,speed=30,torque=0.2 --wait 1
+python -m handlink pose --motor 102=30,speed=30,torque=0.2 --wait 1
+python -m handlink pose --point paper<button class="cp" onclick="copyPre(this)">复制</button></pre>
+      <table>
+        <tr><th>手指</th><th>ID</th><th>行程</th><th>电流上限</th></tr>
+        <tr><td>拇指1</td><td>102</td><td>0–100°</td><td>0.8 A</td></tr>
+        <tr><td>拇指2</td><td>107</td><td>0–45°</td><td>0.8 A</td></tr>
+        <tr><td>食指/中指/无名指/小指</td><td>103–106</td><td>0–180°</td><td>3.5 A</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <!-- 3 -->
+  <details data-phase="3">
+    <summary><span class="num">3</span><span class="t">点位与手势</span>
+      <span class="tag">约 1 小时</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p3-1"><label for="p3-1">先走一遍厂家点位：布 / 石头 / 剪刀，和实物对照</label></li>
+        <li><input type="checkbox" id="p3-2"><label for="p3-2">存 5 个自己的点位：张开、握拳、两指捏、三指捏、半握</label></li>
+        <li><input type="checkbox" id="p3-3"><label for="p3-3">每个点位单独复现 10 次，看稳不稳</label></li>
+      </ul>
+<pre>python -m handlink points
+# 点位就是 points/名字.txt，格式与厂家一致
+[{"motorId":103,"angle":120,"speed":60,"torque":0.5}, ...]<button class="cp" onclick="copyPre(this)">复制</button></pre>
+    </div>
+  </details>
+
+  <!-- 4 -->
+  <details data-phase="4">
+    <summary><span class="num">4</span><span class="t">数据手套：让手跟着你动</span>
+      <span class="tag">约 1 小时</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p4-1"><label for="p4-1">长按开启手套，MotionVenus 里配「转发规则」并应用</label></li>
+        <li><input type="checkbox" id="p4-2"><label for="p4-2">姿态校准：自由模式 → 重置手指角度 + 手背角度 → 分指锁定</label></li>
+        <li><input type="checkbox" id="p4-3"><label for="p4-3">左右手类型对应（选错会镜像反着动）</label></li>
+        <li><input type="checkbox" id="p4-4"><label for="p4-4">测延迟：拍一下手，看屏幕上晚几帧，记毫秒</label></li>
+        <li><input type="checkbox" id="p4-5"><label for="p4-5">记录手套→手的偏差，重点看拇指对掌</label></li>
+      </ul>
+      <div class="why">没有手套时的替代：摄像头 + MediaPipe，代码在 <code>demo/mirror.py</code>，先 <code>--test</code> 验映射再加摄像头。</div>
+    </div>
+  </details>
+
+  <!-- 5 -->
+  <details data-phase="5">
+    <summary><span class="num">5</span><span class="t">动作编排与录制分析</span>
+      <span class="tag">约半天</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p5-1"><label for="p5-1">写一个 3 步动作：张开 → 握 → 放，延时 800 ms</label></li>
+        <li><input type="checkbox" id="p5-2"><label for="p5-2">先 dry-run 看时间线，再真跑</label></li>
+        <li><input type="checkbox" id="p5-3"><label for="p5-3">录一段，看行程 / 峰值电流占用</label></li>
+        <li><input type="checkbox" id="p5-4"><label for="p5-4">峰值电流占用超过 80% 就调低电流或放慢</label></li>
+      </ul>
+<pre>python -m handlink track 动作一 --dry-run
+python -m handlink record --out demo/run.jsonl --point rock --seconds 3
+python -m handlink analyze demo/run.jsonl --markdown<button class="cp" onclick="copyPre(this)">复制</button></pre>
+    </div>
+  </details>
+
+  <!-- 6 -->
+  <details data-phase="6">
+    <summary><span class="num">6</span><span class="t">触觉与力控：抓不碎</span>
+      <span class="tag">约半天</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p6-1"><label for="p6-1">传感器页选端口，打开指尖/掌心，型号不对就刷新</label></li>
+        <li><input type="checkbox" id="p6-2"><label for="p6-2">开始记录，抓 5 次，导出数据</label></li>
+        <li><input type="checkbox" id="p6-3"><label for="p6-3">脆弱物实验：鸡蛋 / 豆腐，电流 0.3 A 起</label></li>
+        <li><input type="checkbox" id="p6-4"><label for="p6-4">记下「刚好不碎」的电流值，做成一张表</label></li>
+      </ul>
+      <div class="warn">⚠️ 只放软物。玻璃和金属锐器留给有防护的工位。</div>
+    </div>
+  </details>
+
+  <!-- 7 -->
+  <details data-phase="7">
+    <summary><span class="num">7</span><span class="t">上大型机械臂</span>
+      <span class="tag">第 2 周 · 1–2 周</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p7-1"><label for="p7-1">法兰对接、走线、负载核对（手 ≤0.51 kg + 物体）</label></li>
+        <li><input type="checkbox" id="p7-2"><label for="p7-2">臂适配器先跑通三个方法：<code>move_to</code> / <code>home</code> / <code>estop</code></label></li>
+        <li><input type="checkbox" id="p7-3"><label for="p7-3">手眼标定：相机固定，标定板过一遍</label></li>
+        <li><input type="checkbox" id="p7-4"><label for="p7-4">慢速空跑轨迹 → 放软物 → 闭环抓取</label></li>
+        <li><input type="checkbox" id="p7-5"><label for="p7-5">10 次抓取记成功率</label></li>
+      </ul>
+      <div class="why">要先问清楚的五件事：臂的品牌型号 / 有没有开放 SDK / 负载与重复精度 / 法兰接口 / 急停与光幕。</div>
+    </div>
+  </details>
+
+  <!-- 8 -->
+  <details data-phase="8">
+    <summary><span class="num">8</span><span class="t">展台与招新</span>
+      <span class="tag">第 3 周</span><span class="grow"></span>
+      <span class="mini"><i></i></span></summary>
+    <div class="body">
+      <ul class="items">
+        <li><input type="checkbox" id="p8-1"><label for="p8-1">三个脚本：石头剪刀布 / 脆弱物 / 视觉分拣</label></li>
+        <li><input type="checkbox" id="p8-2"><label for="p8-2">30 秒循环演示 + 一段讲解词</label></li>
+        <li><input type="checkbox" id="p8-3"><label for="p8-3">安全：警戒线 1.5 m、急停位置、双人操作</label></li>
+        <li><input type="checkbox" id="p8-4"><label for="p8-4">录现场视频，做招新物料</label></li>
+      </ul>
+<pre>python -m handlink serve --port 8766
+python demo/rps.py --server<button class="cp" onclick="copyPre(this)">复制</button></pre>
+    </div>
+  </details>
+
+  <!-- 安全 -->
+  <details class="danger" data-phase="safety">
+    <summary><span class="num">!</span><span class="t">安全红线（每一条都别跳）</span><span class="grow"></span></summary>
+    <div class="body">
+      <table>
+        <tr><th>场景</th><th>做法</th></tr>
+        <tr><td>第一次动 / 改完点位</td><td>速度 ≤60、电流 ≤0.3 A、单指逐个验证</td></tr>
+        <tr><td>电流上限</td><td>拇指 0.8 A，其余 3.5 A。数值越大不代表越安全</td></tr>
+        <tr><td>卡滞 / 异响 / 异常电流</td><td>立刻停，排查机械干涉，别反复复位</td></tr>
+        <tr><td>臂在动</td><td>速度倍率 ≤30%，先空跑轨迹再放物</td></tr>
+        <tr><td>观众</td><td>离设备 1.5 m，地面贴线；有人靠太近直接急停</td></tr>
+        <tr><td>校准</td><td>只在 CAN 稳定、负载卸掉、动作停止时做；过程中不许断连接</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <!-- 故障排查 -->
+  <details data-phase="trouble">
+    <summary><span class="num">?</span><span class="t">卡住了怎么办</span><span class="grow"></span></summary>
+    <div class="body">
+      <table>
+        <tr><th>现象</th><th>先查什么</th></tr>
+        <tr><td><code>scan</code> 看不到 COM</td><td>换根线、装 CH340 驱动、换个 USB 口（别用 hub）</td></tr>
+        <tr><td>CAN 打开失败</td><td>适配器没插好 / 被 LG-603 占着 / 换通道试试</td></tr>
+        <tr><td>点了发送但手不动</td><td>左右手选反、电流太小、连接其实没打开</td></tr>
+        <tr><td>动作方向反了</td><td>左右手类型、手套的左右设置</td></tr>
+        <tr><td>校准超时</td><td>卸掉负载、检查 CAN 稳定性，校准中不能断连接</td></tr>
+        <tr><td>提示过流 / 卡滞</td><td>立即停，人工检查机械干涉和供电</td></tr>
+        <tr><td>位置/计数异常</td><td>复位后从最小角度低速验证，别直接跑动作</td></tr>
+      </table>
+    </div>
+  </details>
+
+  <!-- 验收 -->
+  <details data-phase="accept">
+    <summary><span class="num">✓</span><span class="t">验收：三组实测数据</span><span class="grow"></span></summary>
+    <div class="body">
+      <table>
+        <tr><th>实验</th><th>怎么做</th><th>记什么</th></tr>
+        <tr><td>极限位</td><td>每根手指 0° 和最大角各 5 次</td><td>能不能到位、有没有异响</td></tr>
+        <tr><td>重复性</td><td>同一个点位下发 20 次</td><td>实际角度的最大值−最小值</td></tr>
+        <tr><td>握力-电流</td><td>电流 0.3 / 0.5 / 0.8 各抓一次</td><td>打不打滑、物体有没有变形</td></tr>
+      </table>
+      <div class="why">这三组数据手册里没有，但决定了它能不能做精密活——也是你们参赛时最硬的材料。</div>
+    </div>
+  </details>
+
+  <footer>
+    配套工具：<code>python -m handlink</code>（点位/动作/录制/HTTP）·
+    演示页 <code>/demo</code> · 方案 <code>社团演示方案.md</code>。
+    本页进度只存在这台电脑的浏览器里。
+  </footer>
+</main>
+
+<script>
+const KEY = "handlink-plan-v1";
+const boxes = Array.from(document.querySelectorAll('input[type=checkbox]'));
+const saved = JSON.parse(localStorage.getItem(KEY) || "{}");
+
+for (const b of boxes){
+  b.checked = !!saved[b.id];
+  b.addEventListener('change', () => {
+    const s = JSON.parse(localStorage.getItem(KEY) || "{}");
+    if (b.checked) s[b.id] = 1; else delete s[b.id];
+    localStorage.setItem(KEY, JSON.stringify(s));
+    refresh();
+  });
+}
+
+function refresh(){
+  const done = boxes.filter(b => b.checked).length;
+  const pct = boxes.length ? Math.round(100 * done / boxes.length) : 0;
+  document.getElementById("globalBar").style.width = pct + "%";
+  document.getElementById("globalPct").textContent = pct + "%";
+
+  for (const d of document.querySelectorAll("details[data-phase]")){
+    const own = Array.from(d.querySelectorAll('input[type=checkbox]'));
+    const n = own.filter(b => b.checked).length;
+    const mini = d.querySelector(".mini > i");
+    if (mini) mini.style.width = own.length ? (100 * n / own.length) + "%" : "0%";
+    d.classList.toggle("done-all", own.length > 0 && n === own.length);
+    for (const lbl of d.querySelectorAll("label")){
+      const input = document.getElementById(lbl.getAttribute("for"));
+      if (input) lbl.classList.toggle("done", input.checked);
+    }
+  }
+}
+
+function nextStep(){
+  const b = boxes.find(x => !x.checked);
+  if (!b) return;
+  const det = b.closest("details");
+  if (det) det.open = true;
+  b.closest("li").scrollIntoView({behavior:"smooth", block:"center"});
+  b.focus({preventScroll:true});
+}
+
+function resetAll(){
+  if (!confirm("清空所有勾选？")) return;
+  localStorage.removeItem(KEY);
+  boxes.forEach(b => b.checked = false);
+  refresh();
+}
+
+function copyPre(btn){
+  const text = btn.parentElement.innerText.replace("复制", "").trim();
+  navigator.clipboard.writeText(text).then(
+    () => { btn.textContent = "已复制"; setTimeout(() => btn.textContent = "复制", 1200); },
+    () => { btn.textContent = "复制失败"; setTimeout(() => btn.textContent = "复制", 1200); }
+  );
+}
+
+refresh();
+</script>
+</body>
+</html>

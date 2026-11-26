@@ -1,0 +1,39 @@
+# handlink-terminal bundle patch
+#
+# 安装：plugin_manager → install_bundle，target 指到本目录（或 npm pack 出来的 tgz）。
+# 装完 DSH 侧栏多一个「机械手」入口，点开就是控制终端页面。
+#
+# config 说明：
+#   autoStart   激活时自动拉起本地 python 服务（默认 true）
+#   port        服务端口，被占用会自动往后找（最新版默认 8766，旧版 8765）
+#   pythonPath  指定解释器；留空自动找 python / py -3 / python3
+#   projectDir  用哪份 handlink 源码；留空用包内自带的那份
+#   dataRoot    点位/动作/录制目录；留空用包内 data/
+#   extraPaths  额外的依赖目录（PYTHONPATH），例如你自己的 .tmp/pylibs
+#   canDll      ZLG USBCAN 驱动 DLL；留空用包内 vendor 目录里那份 ECanVci64.dll
+#   gloveAuto   服务就绪后自动收数据手套（默认 true）
+#   gloveSource auto = 先用插件内置的直连小桥（h2sdk），失败/被占就退回 UDP；
+#                sdk  = 只用直连小桥；udp = 只等 MotionVenus 转发
+#   gloveUdp    手套 UDP 端口（默认 5001；直连小桥也发到这个口）
+#   gloveSide   戴的是哪只手：right / left（默认 right）
+#   gloveGain   手套→电机行程的增益（默认 1.0，握不满调大、一下就到底调小）
+#   gloveHz     直连小桥的出帧率（默认 60，手套本身约 30~60 Hz）
+#   hmaxDir     MotionVenus 安装目录（里面有 h2sdk_Release_v120_x86.dll）；留空自动找
+- insert:
+    - id: handlink-terminal
+      name: '@club/handlink-terminal'
+      config:
+        autoStart: true
+        port: 8766
+        pythonPath: ''
+        projectDir: ''
+        dataRoot: ''
+        extraPaths: []
+        canDll: ''
+        gloveAuto: true
+        gloveSource: auto
+        gloveUdp: 5001
+        gloveSide: right
+        gloveGain: 1.0
+        gloveHz: 60
+        hmaxDir: ''
