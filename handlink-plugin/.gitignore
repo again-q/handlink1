@@ -1,0 +1,16 @@
+# 依赖目录：按需 pip install -r requirements.txt
+python/site-packages/
+
+# 打包产物
+*.tgz
+
+# 本机运行数据（点位/录制/轨迹），不是源码
+data/recordings/*.jsonl
+data/tracks/*.txt
+!data/tracks/动作一.txt
+
+# 备份与缓存
+*.bak
+*.bak-*
+__pycache__/
+*.py[cod]
