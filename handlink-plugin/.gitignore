@@ -1,6 +1,9 @@
 # 依赖目录：按需 pip install -r requirements.txt
 python/site-packages/
 
+# vendored 源码副本：由 ../scripts/sync_plugin.py 从 ../../handlink/ 生成，不进版本库
+python/handlink/
+
 # 打包产物
 *.tgz
 
